@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    consul:
+      host: localhost
+      port: 
+      discovery: SERVICE-CLIENT
+  application:
+    name: SERVICE-CLIENT
+  datasource:
+    url:
+      jdbc:mysql://localhost:3309/Micro_ClientDB?createDatabaseIfNotExist=true
+    username: root
+    password: mroot
+    driver-class-name: com.server.servereureka
+  jpa:
+    hibernate:
+     ddl-auto: update
+  show-sql: true
+  properties:
+    hibernate:
+      format_sql: true
+  server:
+    port: 8088
