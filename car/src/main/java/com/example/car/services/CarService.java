@@ -1,5 +1,6 @@
 package com.example.car.services;
 
+import com.example.car.client.ClientServiceClient;
 import com.example.car.entities.Car;
 import com.example.car.entities.Client;
 import com.example.car.models.CarResponse;
@@ -15,22 +16,27 @@ import java.util.List;
 @Service
 public class CarService {
     @Autowired
-    private CarRepository carRepository;
-    @Autowired
-    private RestTemplate restTemplate;
-    private final String URL = "http://localhost:8888/SERVICE-CLIENT";
+    private ClientServiceClient clientServiceClient;
 
     public List<CarResponse> findAll() {
-        List<Car> cars = carRepository.findAll();
-        ResponseEntity<Client[]> response = restTemplate.getForEntity(this.URL + "/api/client", Client[].class);
-        Client[] clients = response.getBody();
-        return cars.stream().map((Car car) -> mapToCarResponse(car, clients)).toList();
+        // Fetch all clients from the Client Microservice
+        List<Client> clients = clientServiceClient.getAllClients();
+
+        // Simulate fetching cars from the database
+        List<Car> cars = Arrays.asList(
+                new Car(1L, "Toyota", "Corolla", 1L),
+                new Car(2L, "Honda", "Civic", 2L)
+        );
+
+        // Map Car entities to CarResponse models
+        return cars.stream()
+                .map(car -> mapToCarResponse(car, clients))
+                .toList();
     }
 
-    // this function allow the change the Car Entity to A Model that we will send ot the client side using the @Builder Annotation
-    private CarResponse mapToCarResponse(Car car, Client[] clients) {
-        Client foundClient = Arrays.stream(clients)
-                .filter(client -> client.getId().equals(car.getClient_id()))
+    private CarResponse mapToCarResponse(Car car, List<Client> clients) {
+        Client foundClient = clients.stream()
+                .filter(client -> client.getId().equals(car.getClientId()))
                 .findFirst()
                 .orElse(null);
 
@@ -38,21 +44,22 @@ public class CarService {
                 .id(car.getId())
                 .brand(car.getBrand())
                 .client(foundClient)
-                .matricue(car.getMatricule())
                 .model(car.getModel())
                 .build();
     }
 
-
     public CarResponse findById(Long id) throws Exception {
-        Car car = carRepository.findById(id).orElseThrow(() -> new Exception("Invalid Car Id"));
-        Client client = restTemplate.getForObject(this.URL + "/api/client/" + car.getClient_id(), Client.class);
+        // Simulate fetching a car by ID from the database
+        Car car = new Car(1L, "Toyota", "Corolla", 1L); // Replace with actual DB call
+
+        // Fetch the associated client from the Client Microservice
+        Client client = clientServiceClient.getClientById(car.getClientId());
+
         return CarResponse.builder()
                 .id(car.getId())
                 .brand(car.getBrand())
                 .client(client)
-                .matricue(car.getMatricule())
                 .model(car.getModel())
                 .build();
-    }
+}
 }
